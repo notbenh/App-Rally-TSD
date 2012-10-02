@@ -186,7 +186,7 @@ $ ->
                             id = log.log.length - 1 unless id.length
                             it = log.log[id]
                             #console.info([it,id,method,value])
-                            it[method] = value
+                            if typeof it[method] is 'function' then it[method](value) else it[method] = value
                             it.calculate()
                         log.display()
                         buffer.clear()
