@@ -1,6 +1,7 @@
 class EventLog
   constructor: (@id) ->
     this.log = []
+    this.default_cast = 1
 
   add: (event) ->
     if typeof event == 'string'
@@ -9,9 +10,15 @@ class EventLog
       # do nothing as we have been passed a proper object
     else
       event = new TimeEvent('automated')
+
+    prev = this.log[ this.log.length - 1]
+
+    event.diff = event.time - this.log[ this.log.length - 1]?.time ? 0
+    event.cast = prev?.cast ? this.default_cast
+
     this.log.push( event )
 
-  update: ->
+  display: ->
     table = '<table>'
     table += event.display(id) for event,id in this.log;
     $(this.id).html(table + '</table>')
@@ -41,9 +48,9 @@ class TimeEvent
     this.cast/(60*60)
 
   display: (id) ->
-    row = "<tr><th>#{id}</th><td>#{this.note}</td></tr>"
-    row
-
+    row = "<th>#{this.id}</th>"
+    row += "<td>#{this.x}</td>" for x in ['note','cast','time','diff']
+    return "<tr>#{row}</tr>"
 
 class DecimalClock
   constructor: (@id,@interval) ->
@@ -68,7 +75,6 @@ class CLI
   constructor: (@selector, @events) ->
     $( this.selector ).keypress (event) =>
       current_value = $(this.selector).val()
-      console.info(current_value)
 
       if this.events.keys[event.which]
         if typeof  this.events.keys[event.which] == 'function'
@@ -106,18 +112,25 @@ class CLI
 
 $ ->
   log = new EventLog('#log')
-  log.add('start')
 
   buffer = new CLI( '#buffer' ,
                     keys  :
                       32: -> 
-                        console.info('SPACE')
                         log.add()
-                        log.update()
+                        log.display()
                         buffer.clear()
                       13: -> 
                         # TODO this should not directly access 
-                        console.info( $('#buffer').val().match(/^(\d*)([a-z]+)(.*)/) )
+                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+)(.*)/)
+                        id = -1 unless id.length
+                        console.info([id,method,value])
+
+                        ###
+                        match = $('#buffer').val().match(/^\s*(\d*)([a-z]+)(.*)/)
+                        match.shift() # remove that pointless copy of what we just had?!?
+                        match[0] = -1 unless match[0].length
+                        console.info(match)
+                        ###
                         buffer.clear()
                         console.info('ENTER')
                     values:
