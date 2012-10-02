@@ -34,7 +34,7 @@ UTC_HMC = (date) ->
 
 class EventLog
   constructor: (@id) ->
-    this.log = []
+    @log = []
 
   add: (event) ->
     if typeof event == 'string'
@@ -44,13 +44,13 @@ class EventLog
     else
       event = new TimeEvent('automated')
 
-    prev = this.log[ this.log.length - 1]
+    prev = @log[ @log.length - 1]
 
-    event.time = event.date - this.log[0].date if this.log[0]?
-    event.diff = event.date - this.log[ this.log.length - 1].date if this.log[ this.log.length - 1]?
+    event.time = event.date - @log[0].date if @log[0]?
+    event.diff = event.date - @log[ @log.length - 1].date if @log[ @log.length - 1]?
     event.cast ?= prev?.cast 
 
-    this.log.push( event )
+    @log.push( event )
 
   display: ->
     table = """
@@ -60,6 +60,11 @@ class EventLog
                 <th>split</th>
                 <th>lap</th>
                 <th>cast</th>
+                <th>!cast</th>
+                <th>'cast</th>
+                <th>dist</th>
+                <th>!dist</th>
+                <th>'dist</th>
                 <th>note</th>
               </tr>
             """
@@ -69,88 +74,95 @@ class EventLog
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
                  <td>#{event.cast}</td>
+                 <td>#{event._cast}</td>
+                 <td>#{event.cast - event._cast}</td>
+                 <td>#{event.dist}</td>
+                 <td>#{event._dist}</td>
+                 <td>#{event.dist - event._dist}</td>
                  <td>#{event.note}</td>
                </tr>
-             """ for event,id in this.log
-    $(this.id).html(table + '</table>')
+             """ for event,id in @log
+    $(@id).html(table + '</table>')
 
   all: ->
     console.info(this)
 
 class TimeEvent
   constructor: (@note) ->
-    this.date = new Date
-    this.time = 0
-    this.diff = 0
-    this.cast = 1 #TODO this should be some kinda default?
+    @date = new Date
+    @time = 0
+    @diff = 0
+    @cast = 1 #TODO this should be some kinda default?
     ###
-    this.diff  = NULL
-    this._diff = NULL
-    this.dist  = NULL
-    this._dist = NULL
-    this.cast  = NULL
-    this._cast = NULL
+    @diff  = NULL
+    @_diff = NULL
+    @dist  = NULL
+    @_dist = NULL
+    @cast  = NULL
+    @_cast = NULL
     ###
   
   diff_in_min: ->
-    this.diff / 60
+    @diff / 60
 
   diff_in_hr: ->
-    this.diff/(60*60)
+    @diff/(60*60)
 
   cast_in_sec: ->
-    this.cast/(60*60)
+    @cast/(60*60)
 
   calculate: ->
     # fill in all the _* vars 
     # CAST = dist / diff
+    @_dist = @cast * @.diff_in_hr() if @cast? and @diff?
+    @_cast = @dist / @.diff_in_hr() if @dist? and @diff?
 
 class DecimalClock
   constructor: (@id,@interval) ->
-    # console.info( "new clock for #{this.id} ticks at #{this.interval}/1000")
-    this.setUpdateInterval()
+    # console.info( "new clock for #{@id} ticks at #{@interval}/1000")
+    @setUpdateInterval()
     
   update: ->
-    $(this.id).html( HMC(new Date) )
+    $(@id).html( HMC(new Date) )
 
   setUpdateInterval: ->
-    setInterval( @update.bind(this), this.interval) # you have to bind this to a reference =(
+    setInterval( @update.bind(this), @interval) # you have to bind this to a reference =(
 
 
 
 class CLI
   # TODO I would rather have this become a hash->switch thing
   constructor: (@selector, @events) ->
-    $( this.selector ).keypress (event) =>
-      current_value = $(this.selector).val()
+    $( @selector ).keypress (event) =>
+      current_value = $(@selector).val()
 
-      if this.events.keys[event.which]
-        if typeof  this.events.keys[event.which] == 'function'
-          this.events.keys[event.which]( event )
+      if @events.keys[event.which]
+        if typeof  @events.keys[event.which] == 'function'
+          @events.keys[event.which]( event )
         else
           console.info('THIS HAS NOT YET BEEN IMPLIMENTED')
-      else if this.events.values[ current_value ]
-        if typeof this.events.values[ current_value ] == 'function'
-          this.events.values[ current_value ]( event )
+      else if @events.values[ current_value ]
+        if typeof @events.values[ current_value ] == 'function'
+          @events.values[ current_value ]( event )
           msg = "key match for #{current_value}"
           console.info(msg)
         else
           console.info('THIS HAS NOT YET BEEN IMPLIMENTED')
-      else if this.events.default
-        this.events.default( event )
+      else if @events.default
+        @events.default( event )
       else
         # console.info( 'ultra default' )
 
-    $( this.selector ).focus()
+    $( @selector ).focus()
 
   me: ->
-    return $(this.selector)
+    return $(@selector)
 
   val: ->
-    return $(this.selector).val()
+    return $(@selector).val()
 
   clear: ->
-    $(this.selector).val('')
+    $(@selector).val('')
 
   mk_ev: ->
     return (event) -> console.info(event.which)
@@ -169,16 +181,17 @@ $ ->
                         buffer.clear()
                       13: -> 
                         # TODO this should not directly access 
-                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+)(.*)/)
-                        id = -1 unless id.length
-                        console.info([id,method,value])
-
-                        ###
-                        match = $('#buffer').val().match(/^\s*(\d*)([a-z]+)(.*)/)
-                        match.shift() # remove that pointless copy of what we just had?!?
-                        match[0] = -1 unless match[0].length
-                        console.info(match)
-                        ###
+                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
+                        switch method
+                          when 'rm' then log.log.splice(id,1)
+                          when 'reset' then log.log = []
+                          else
+                            id = log.log.length - 1 unless id.length
+                            it = log.log[id]
+                            console.info([it,id,method,value])
+                            it[method] = value
+                            it.calculate()
+                        log.display()
                         buffer.clear()
                         console.info('ENTER')
                     values:
