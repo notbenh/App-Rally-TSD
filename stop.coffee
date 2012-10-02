@@ -1,7 +1,22 @@
+HMC = (date) ->
+  sprintf('%02d:%02d.%02d' \
+         , date.getHours()    \
+         , date.getMinutes()  \
+         , Math.ceil(date.getSeconds() * 100/60 + date.getMilliseconds() / 1000) \
+         )
+
+UTC_HMC = (date) ->
+  sprintf('%02d:%02d.%02.3f' \
+         , date.getUTCHours()    \
+         , date.getUTCMinutes()  \
+         , date.getUTCSeconds() * 100/60 + date.getUTCMilliseconds() / 1000 \
+         )
+
+
+
 class EventLog
   constructor: (@id) ->
     this.log = []
-    this.default_cast = 1
 
   add: (event) ->
     if typeof event == 'string'
@@ -13,8 +28,9 @@ class EventLog
 
     prev = this.log[ this.log.length - 1]
 
-    event.diff = event.time - this.log[ this.log.length - 1]?.time ? 0
-    event.cast = prev?.cast ? this.default_cast
+    event.time = event.date - this.log[0].date if this.log[0]?
+    event.diff = event.date - this.log[ this.log.length - 1].date if this.log[ this.log.length - 1]?
+    event.cast ?= prev?.cast 
 
     this.log.push( event )
 
@@ -28,7 +44,10 @@ class EventLog
 
 class TimeEvent
   constructor: (@note) ->
-    this.time = new Date
+    this.date = new Date
+    this.time = 0
+    this.diff = 0
+    this.cast = 1 #TODO this should be some kinda default?
     ###
     this.diff  = NULL
     this._diff = NULL
@@ -47,25 +66,32 @@ class TimeEvent
   cast_in_sec: ->
     this.cast/(60*60)
 
+  calculate: ->
+    # fill in all the _* vars 
+    # CAST = dist / diff
+
+
   display: (id) ->
-    row = "<th>#{this.id}</th>"
-    row += "<td>#{this.x}</td>" for x in ['note','cast','time','diff']
-    return "<tr>#{row}</tr>"
+    this.calculate()
+    """
+      <tr>
+        <th>#{id}</th>
+        <td>#{this.note}</td>
+        <td>#{this.cast}</td>
+        <td>#{UTC_HMC( new Date(this.time)) }</td>
+        <td>#{UTC_HMC( new Date(this.diff)) }</td>
+      </tr>
+    """
 
 class DecimalClock
   constructor: (@id,@interval) ->
-    console.info( "new clock for #{this.id} ticks at #{this.interval}/1000")
+    # console.info( "new clock for #{this.id} ticks at #{this.interval}/1000")
     this.setUpdateInterval()
     
   update: ->
-    C = new Date
-    $(this.id).html( sprintf('%02d:%02d.%02d' \
-                            , C.getHours()    \
-                            , C.getMinutes()  \
-                            , Math.ceil(C.getSeconds() * 100/60 + C.getMilliseconds() / 1000) \
-                            ))
+    $(this.id).html( HMC(new Date) )
+
   setUpdateInterval: ->
-    console.info('setting up interval')
     setInterval( @update.bind(this), this.interval) # you have to bind this to a reference =(
 
 
