@@ -45,10 +45,12 @@ class EventLog
       event = new TimeEvent('automated')
 
     prev = @log[ @log.length - 1]
+    #console.info(prev)
 
     event.time = event.date - @log[0].date if @log[0]?
     event.diff = event.date - @log[ @log.length - 1].date if @log[ @log.length - 1]?
-    event.cast ?= prev?.cast 
+    event.cast = prev?.cast 
+    event.calculate()
 
     @log.push( event )
 
@@ -83,9 +85,6 @@ class EventLog
                </tr>
              """ for event,id in @log
     $(@id).html(table + '</table>')
-
-  all: ->
-    console.info(this)
 
 class TimeEvent
   constructor: (@note) ->
@@ -164,9 +163,6 @@ class CLI
   clear: ->
     $(@selector).val('')
 
-  mk_ev: ->
-    return (event) -> console.info(event.which)
-
 ## --------------------------------------------------------------------------- ##
 
 
@@ -185,18 +181,18 @@ $ ->
                         switch method
                           when 'rm' then log.log.splice(id,1)
                           when 'reset' then log.log = []
+                          when 'update' then log.display()
                           else
                             id = log.log.length - 1 unless id.length
                             it = log.log[id]
-                            console.info([it,id,method,value])
+                            #console.info([it,id,method,value])
                             it[method] = value
                             it.calculate()
                         log.display()
                         buffer.clear()
-                        console.info('ENTER')
                     values:
                       'monkey': -> console.info('MONKEY')
-                    default: -> console.info(event.which)
+                    #default: -> console.info(event.which)
                   )
 
   clock_tod = new DecimalClock('#tod',50)
