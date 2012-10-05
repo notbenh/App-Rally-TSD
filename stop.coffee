@@ -127,20 +127,6 @@ class HeartBeat
   setUpdateInterval: ->
     setInterval( @update.bind(this), @interval)
 
-
-class DecimalClock
-  constructor: (@id,@interval) ->
-    # console.info( "new clock for #{@id} ticks at #{@interval}/1000")
-    @setUpdateInterval()
-    
-  update: ->
-    $(@id).html( HMC(new Date) )
-
-  setUpdateInterval: ->
-    setInterval( @update.bind(this), @interval) # you have to bind this to a reference =(
-
-
-
 class CLI
   # TODO I would rather have this become a hash->switch thing
   constructor: (@selector, @events) ->
@@ -200,7 +186,7 @@ $ ->
                         e.display()
                         buffer.clear()
                   )
-  clock_tod     = new DecimalClock('#tod',50)
+  clock_tod     = new HeartBeat('#tod'               , 50 , -> HMC(new Date) )
   current_cast  = new HeartBeat( '#current_cast'     , 100, -> e.last()?.cast )
   expected_dist = new HeartBeat( '#expected_distance', 100, -> 
                                                               now     = new Date
