@@ -19,6 +19,7 @@ UTC_HMC = (date) ->
 class EventLog
   constructor: (@id) ->
     @log = []
+    @odo_factor = 1
 
   add: (event) ->
     if typeof event == 'string'
@@ -28,12 +29,9 @@ class EventLog
     else
       event = new TimeEvent('automated')
 
-    prev = @log[0]
-    #console.info(prev)
-
     event.time = event.date - @first().date if @first()?
-    event.diff = event.date - prev.date if prev?
-    event.cast = prev?.cast
+    event.diff = event.date - @last().date if @last()?
+    event.cast = @last()?.cast
     event.calculate()
 
     #@log.push( event ) # I'm going to reverse the stack 
@@ -80,14 +78,6 @@ class TimeEvent
     @time = 0
     @diff = 0
     @cast = 1 #TODO this should be some kinda default?
-    ###
-    @diff  = NULL
-    @_diff = NULL
-    @dist  = NULL
-    @_dist = NULL
-    @cast  = NULL
-    @_cast = NULL
-    ###
   
   diff_in_min: ->
     @diff / (1000*60)
@@ -98,11 +88,10 @@ class TimeEvent
   cast_in_sec: ->
     @cast/(60*60)
 
-  calculate: ->
-    # fill in all the _* vars 
+  # TODO SLOPPY passing the odo factor here
+  calculate: (odo_factor) ->
     # CAST = dist / diff
-    #@_dist = @cast * @diff_in_hr() if @cast? and @diff?
-    @_cast = @dist / @diff_in_hr() if @dist? and @diff?
+    @_cast = (@dist * odo_factor) / @diff_in_hr() if @dist? and @diff?
 
 class HeartBeat
   constructor: (@id,@interval,@action) ->
@@ -169,7 +158,7 @@ $ ->
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
-                            it.calculate()
+                            it.calculate(e.odo_factor)
                         e.display()
                         buffer.clear()
                     default : ->
@@ -179,6 +168,6 @@ $ ->
   expected_dist = new HeartBeat( '#expected_distance', 1000, -> 
                                                                now     = new Date
                                                                since   = now - e.last()?.date # mseconds
-                                                               covered = e.last()?.cast * (since / (1000*60*60))
-                                                               (parseFloat(e.last()?.dist) + covered).toFixed(3)
+                                                               covered = ( e.last()?.cast * (since / (1000*60*60)) ) / e.odo_factor
+                                                               (parseFloat(e.last()?.dist ) + covered).toFixed(3)
                                )
