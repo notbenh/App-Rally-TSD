@@ -152,9 +152,10 @@ $ ->
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
                         id = 0 unless id.length
                         switch method
-                          when 'rm' then e.log.splice(id,1)
-                          when 'reset' then e.log = []
+                          when 'rm'     then e.log.splice(id,1)
+                          when 'reset'  then e.log = []
                           when 'update' then e.display()
+                          when 'odo'    then e.odo_factor = value / e.last().dist
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
@@ -163,6 +164,7 @@ $ ->
                         buffer.clear()
                     default : ->
                   )
+  odofactor     = new HeartBeat( '#odo'              , 1000, -> e.odo_factor )
   clock_tod     = new HeartBeat( '#tod'              , 100 , -> HMC(new Date) )
   current_cast  = new HeartBeat( '#current_cast'     , 1000, -> e.last()?.cast )
   expected_dist = new HeartBeat( '#expected_distance', 1000, -> 
