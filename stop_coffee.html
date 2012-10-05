@@ -5,43 +5,50 @@
   <script src="./sprintf-0.7-beta1.js" type="text/javascript"></script>
   <script src="./stop.js" type="text/javascript"></script>
   <style type="text/css" >
+    body {
+      color: #FFF;
+      background-color: #200;
+    }
     #log table {
       border-width: 1px;
       border-spacing: 0px;
       border-style: none;
       border-color: red;
       border-collapse: collapse;
-      background-color: white;
+      background-color : none;
     }
     #log table th {
       border-width: 1px;
       padding: 5px;
       border-style: dotted;
       border-color: gray;
+      /*
       background-color: white;
       -moz-border-radius: ;
+      */
     }
     #log table td {
       border-width: 1px;
       padding: 5px;
       border-style: dotted;
       border-color: gray;
-      background-color: white;
-      -moz-border-radius: ;
     }
     #sidebar_display {
       font-size: 400%;
       float:left;
       width:40%;
       overflow: hidden;
+      margin-right :10px;
+    }
+    #sidebar_display fieldset {
+      padding:7px;
     }
     #sidebar_display legend {
       font-size: 15px;
     }
   </style>
 </head>
-<body>
-  <!-- TODO: again this should be a template and automated as this is kinda bullshit -->
+<body bgcolor='#200'>
   <div id='sidebar_display'>
     <div>
     <fieldset>
@@ -65,13 +72,13 @@
     </div>
   </div>
   <div id='main_display'>
+    <div id='terminal'>
+      <input type='text' id='buffer'>
+    </div>
     <div id='stopwatch'>
       <div id='split'></div>
       <div id='lap'></div>
     </div>
     <div id='log'></div>
-    <div id='terminal'>
-      <input type='text' id='buffer'>
-    </div>
   </div>
 </body>

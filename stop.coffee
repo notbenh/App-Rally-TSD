@@ -1,21 +1,3 @@
-### TODO to keep sprintf or not? currently does not do n.nf correctly 
-zpad = (dig,pad) ->
-  return 0 if typeof dig == 'undefned'
-  pad = pad.toString() unless typeof pad == 'string'
-  dig = dig.toString() unless typeof dig == 'string'
-
-  if padS.match(/[.]/) 
-    [dig1,dig2] = digS.split(/[.]/,2)
-    [pad1,pad2] = padS.split(/[.]/,2)
-    return zpad(dig1,pad1) + '.' + zpad(dig2.toString().substr(0,pad2),pad2)
-  else
-    if digS.length < pad
-      digS = "0#{digS}" for x in [pad - digS.length .. 1]
-
-    return digS
-###
-
-
 HMC = (date) ->
   sec = sprintf( '0.3f', date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 )
 
@@ -46,17 +28,20 @@ class EventLog
     else
       event = new TimeEvent('automated')
 
-    prev = @log[ @log.length - 1]
+    prev = @log[0]
     #console.info(prev)
+    console.info([event,prev,@first()])
 
-    event.time = event.date - @log[0].date if @log[0]?
-    event.diff = event.date - @log[ @log.length - 1].date if @log[ @log.length - 1]?
-    event.cast = prev?.cast 
+    event.time = event.date - @first().date if @first()?
+    event.diff = event.date - prev.date if prev?
+    event.cast = prev?.cast
     event.calculate()
 
-    @log.push( event )
+    #@log.push( event ) # I'm going to reverse the stack 
+    @log.unshift( event )
 
-  last: -> @log[@log.length - 1]
+  last: -> @log[0]
+  first: -> @log[ @log.length - 1]
 
   # TODO this is a mess, I should not really be building a table here (isn't there a template for this?)
   display: ->
@@ -179,8 +164,7 @@ $ ->
                           when 'reset' then e.log = []
                           when 'update' then e.display()
                           else
-                            id = e.log.length - 1 unless id.length
-                            it = e.log[id]
+                            it = e.last()
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
                             it.calculate()
                         e.display()
@@ -194,4 +178,3 @@ $ ->
                                                               covered = e.last()?.cast * (since / (1000*60*60))
                                                               (parseFloat(e.last()?.dist) + covered).toFixed(3)
                                )
-  alert 'ready'
