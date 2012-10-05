@@ -20,6 +20,15 @@ class EventLog
   constructor: (@id) ->
     @log = []
     @odo_factor = 1
+    @time_hack = 0
+
+  setTimeOffset: (time) ->
+    now = new Date
+    [junk,H,M,C] = time.match(/^\s*(\d\d):(\d\d)([.].*)?/)
+    C = 0 unless C
+    S = parseInt(C * 60/100)
+    hack = new Date(now.getFullYear(), now.getMonth(), now.getDay(), H, M ,S, 0)
+    @time_hack = hack - now
 
   add: (event) ->
     if typeof event == 'string'
@@ -156,6 +165,7 @@ $ ->
                           when 'reset'  then e.log = []
                           when 'update' then e.display()
                           when 'odo'    then e.odo_factor = value / e.last().dist
+                          when 'time'   then e.setTimeOffset(value)
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
@@ -165,9 +175,10 @@ $ ->
                     default : ->
                   )
   odofactor     = new HeartBeat( '#odo'              , 1000, -> e.odo_factor )
-  clock_tod     = new HeartBeat( '#tod'              , 100 , -> HMC(new Date) )
+  timehack      = new HeartBeat( '#time'             , 1000, -> e.time_hack )
+  clock_tod     = new HeartBeat( '#tod'              , 100 , -> HMC(new Date((new Date).valueOf() + e.time_hack) ))
   current_cast  = new HeartBeat( '#current_cast'     , 1000, -> e.last()?.cast )
-  expected_dist = new HeartBeat( '#expected_distance', 1000, -> 
+  expected_dist = new HeartBeat( '#expected_distance', 1000, ->
                                                                now     = new Date
                                                                since   = now - e.last()?.date # mseconds
                                                                covered = ( e.last()?.cast * (since / (1000*60*60)) ) / e.odo_factor
