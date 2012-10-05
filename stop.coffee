@@ -49,6 +49,7 @@ class EventLog
             <table>
               <tr>
                 <th>id</th>
+                <th>tod</th>
                 <th>split</th>
                 <th>lap</th>
                 <th>CAST<sub>actual</sub></th>
@@ -61,6 +62,7 @@ class EventLog
     table += """
                <tr>
                  <th>#{id}</th>
+                 <td>#{HMC(event.date) }</td>
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
                  <td>#{event.cast}</td>
