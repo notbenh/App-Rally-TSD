@@ -30,7 +30,6 @@ class EventLog
 
     prev = @log[0]
     #console.info(prev)
-    console.info([event,prev,@first()])
 
     event.time = event.date - @first().date if @first()?
     event.diff = event.date - prev.date if prev?
@@ -40,6 +39,7 @@ class EventLog
     #@log.push( event ) # I'm going to reverse the stack 
     @log.unshift( event )
 
+  getId: (id) -> if id == -1 then return @first else @log[id]
   last: -> @log[0]
   first: -> @log[ @log.length - 1]
 
@@ -64,8 +64,8 @@ class EventLog
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
                  <td>#{event.cast}</td>
-                 <td>#{event._cast}</td>
-                 <td>#{event._cast - event.cast}</td>
+                 <td>#{parseFloat(event._cast).toFixed(3)}</td>
+                 <td>#{parseFloat(event._cast - event.cast).toFixed(3)}</td>
                  <td>#{event.dist}</td>
                  <td>#{event.note}</td>
                </tr>
@@ -159,12 +159,13 @@ $ ->
                       13: -> 
                         # TODO this should not directly access 
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
+                        id = 0 unless id.length
                         switch method
                           when 'rm' then e.log.splice(id,1)
                           when 'reset' then e.log = []
                           when 'update' then e.display()
                           else
-                            it = e.last()
+                            it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
                             it.calculate()
                         e.display()
