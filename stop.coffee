@@ -1,7 +1,7 @@
 HMC = (date) ->
   sec = sprintf( '0.3f', date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 )
 
-  sprintf('%02d:%02d.%02.3f' \
+  sprintf('%02d:%02d.%02.0f' \
          , date.getHours()    \
          , date.getMinutes()  \
          , date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 \
@@ -88,10 +88,10 @@ class TimeEvent
     ###
   
   diff_in_min: ->
-    @diff / 60
+    @diff / (1000*60)
 
   diff_in_hr: ->
-    @diff/(60*60)
+    @diff/(1000*60*60)
 
   cast_in_sec: ->
     @cast/(60*60)
@@ -99,8 +99,8 @@ class TimeEvent
   calculate: ->
     # fill in all the _* vars 
     # CAST = dist / diff
-    @_dist = @cast * @.diff_in_hr() if @cast? and @diff?
-    @_cast = @dist / @.diff_in_hr() if @dist? and @diff?
+    #@_dist = @cast * @diff_in_hr() if @cast? and @diff?
+    @_cast = @dist / @diff_in_hr() if @dist? and @diff?
 
 class HeartBeat
   constructor: (@id,@interval,@action) ->
@@ -131,7 +131,7 @@ class CLI
         else
           console.info('THIS HAS NOT YET BEEN IMPLIMENTED')
       else if @events.default
-        @events.default( event )
+        # @events.default( event )
       else
         # console.info( 'ultra default' )
 
@@ -170,12 +170,13 @@ $ ->
                             it.calculate()
                         e.display()
                         buffer.clear()
+                    default : ->
                   )
-  clock_tod     = new HeartBeat('#tod'               , 50 , -> HMC(new Date) )
-  current_cast  = new HeartBeat( '#current_cast'     , 100, -> e.last()?.cast )
-  expected_dist = new HeartBeat( '#expected_distance', 100, -> 
-                                                              now     = new Date
-                                                              since   = now - e.last()?.date # mseconds
-                                                              covered = e.last()?.cast * (since / (1000*60*60))
-                                                              (parseFloat(e.last()?.dist) + covered).toFixed(3)
+  clock_tod     = new HeartBeat( '#tod'              , 100 , -> HMC(new Date) )
+  current_cast  = new HeartBeat( '#current_cast'     , 1000, -> e.last()?.cast )
+  expected_dist = new HeartBeat( '#expected_distance', 1000, -> 
+                                                               now     = new Date
+                                                               since   = now - e.last()?.date # mseconds
+                                                               covered = e.last()?.cast * (since / (1000*60*60))
+                                                               (parseFloat(e.last()?.dist) + covered).toFixed(3)
                                )
