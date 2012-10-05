@@ -1,7 +1,8 @@
 ### TODO to keep sprintf or not? currently does not do n.nf correctly 
 zpad = (dig,pad) ->
-  padS = pad.toString()
-  digS = dig.toString()
+  return 0 if typeof dig == 'undefned'
+  pad = pad.toString() unless typeof pad == 'string'
+  dig = dig.toString() unless typeof dig == 'string'
 
   if padS.match(/[.]/) 
     [dig1,dig2] = digS.split(/[.]/,2)
@@ -11,8 +12,9 @@ zpad = (dig,pad) ->
     if digS.length < pad
       digS = "0#{digS}" for x in [pad - digS.length .. 1]
 
-    digS
+    return digS
 ###
+
 
 HMC = (date) ->
   sec = sprintf( '0.3f', date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 )
@@ -54,6 +56,9 @@ class EventLog
 
     @log.push( event )
 
+  last: -> @log[@log.length - 1]
+
+  # TODO this is a mess, I should not really be building a table here (isn't there a template for this?)
   display: ->
     table = """
             <table>
@@ -61,12 +66,10 @@ class EventLog
                 <th>id</th>
                 <th>split</th>
                 <th>lap</th>
-                <th>cast</th>
-                <th>!cast</th>
-                <th>'cast</th>
-                <th>dist</th>
-                <th>!dist</th>
-                <th>'dist</th>
+                <th>CAST<sub>actual</sub></th>
+                <th>CAST<sub>calculated</sub></th>
+                <th>&Delta;CAST</th>
+                <th>dist<sub>miles</sub></th>
                 <th>note</th>
               </tr>
             """
@@ -77,10 +80,8 @@ class EventLog
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
                  <td>#{event.cast}</td>
                  <td>#{event._cast}</td>
-                 <td>#{event.cast - event._cast}</td>
+                 <td>#{event._cast - event.cast}</td>
                  <td>#{event.dist}</td>
-                 <td>#{event._dist}</td>
-                 <td>#{event.dist - event._dist}</td>
                  <td>#{event.note}</td>
                </tr>
              """ for event,id in @log
@@ -115,6 +116,17 @@ class TimeEvent
     # CAST = dist / diff
     @_dist = @cast * @.diff_in_hr() if @cast? and @diff?
     @_cast = @dist / @.diff_in_hr() if @dist? and @diff?
+
+class HeartBeat
+  constructor: (@id,@interval,@action) ->
+    @setUpdateInterval()
+    
+  update: ->
+    $(@id).html( @action() )
+
+  setUpdateInterval: ->
+    setInterval( @update.bind(this), @interval)
+
 
 class DecimalClock
   constructor: (@id,@interval) ->
@@ -165,35 +177,35 @@ class CLI
 
 ## --------------------------------------------------------------------------- ##
 
-
 $ ->
-  log = new EventLog('#log')
-
+  e = new EventLog('#log')
   buffer = new CLI( '#buffer' ,
                     keys  :
                       32: -> 
-                        log.add()
-                        log.display()
+                        e.add()
+                        e.display()
                         buffer.clear()
                       13: -> 
                         # TODO this should not directly access 
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
                         switch method
-                          when 'rm' then log.log.splice(id,1)
-                          when 'reset' then log.log = []
-                          when 'update' then log.display()
+                          when 'rm' then e.log.splice(id,1)
+                          when 'reset' then e.log = []
+                          when 'update' then e.display()
                           else
-                            id = log.log.length - 1 unless id.length
-                            it = log.log[id]
-                            #console.info([it,id,method,value])
+                            id = e.log.length - 1 unless id.length
+                            it = e.log[id]
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
                             it.calculate()
-                        log.display()
+                        e.display()
                         buffer.clear()
-                    values:
-                      'monkey': -> console.info('MONKEY')
-                    #default: -> console.info(event.which)
                   )
-
-  clock_tod = new DecimalClock('#tod',50)
+  clock_tod     = new DecimalClock('#tod',50)
+  current_cast  = new HeartBeat( '#current_cast'     , 100, -> e.last()?.cast )
+  expected_dist = new HeartBeat( '#expected_distance', 100, -> 
+                                                              now     = new Date
+                                                              since   = now - e.last()?.date # mseconds
+                                                              covered = e.last()?.cast * (since / (1000*60*60))
+                                                              (parseFloat(e.last()?.dist) + covered).toFixed(3)
+                               )
   alert 'ready'

@@ -29,16 +29,49 @@
       background-color: white;
       -moz-border-radius: ;
     }
+    #sidebar_display {
+      font-size: 400%;
+      float:left;
+      width:40%;
+      overflow: hidden;
+    }
+    #sidebar_display legend {
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
-  <div id='tod'></div>
-  <div id='stopwatch'>
-    <div id='split'></div>
-    <div id='lap'></div>
+  <!-- TODO: again this should be a template and automated as this is kinda bullshit -->
+  <div id='sidebar_display'>
+    <div>
+    <fieldset>
+      <legend>TOD</legend>
+      <span id='tod'></span>
+    </fieldset>
+    </div>
+
+    <div>
+    <fieldset>
+      <legend>CAST</legend>
+      <span id='current_cast'></span>
+    </fieldset>
+    </div>
+
+    <div>
+    <fieldset>
+      <legend>EXPECTED DISTANCE</legend>
+      <span id='expected_distance'></span>
+    </fieldset>
+    </div>
   </div>
-  <div id='log'></div>
-  <div id='terminal'>
-    <input type='text' id='buffer'>
+  <div id='main_display'>
+    <div id='stopwatch'>
+      <div id='split'></div>
+      <div id='lap'></div>
+    </div>
+    <div id='log'></div>
+    <div id='terminal'>
+      <input type='text' id='buffer'>
+    </div>
   </div>
 </body>
