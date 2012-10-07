@@ -182,5 +182,5 @@ $ ->
                                                                now     = new Date
                                                                since   = now - e.last()?.date # mseconds
                                                                covered = ( e.last()?.cast * (since / (1000*60*60)) ) / e.odo_factor
-                                                               (parseFloat(e.last()?.dist ) + covered).toFixed(3)
+                                                               (parseFloat(e.last()?.dist ) + covered).toFixed(2)
                                )

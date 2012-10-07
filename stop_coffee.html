@@ -9,6 +9,9 @@
       color: #FFF;
       background-color: #200;
     }
+    *.dim {
+      color: #755;
+    }
     #log table {
       border-width: 1px;
       border-spacing: 0px;
@@ -34,9 +37,8 @@
       border-color: gray;
     }
     #sidebar_display {
-      font-size: 400%;
       float:left;
-      width:470px;
+      width:450px;
       height:100%;
       overflow: hidden;
       margin-right :10px;
@@ -44,18 +46,40 @@
     #sidebar_display fieldset {
       padding:7px;
     }
-    #sidebar_display div.small ,
+    #sidebar_display span {
+      font-size: 400%;
+    }
+    #sidebar_display span.small ,
     #sidebar_display legend {
       font-size: 15px;
+    }
+    #sidebar_display span.big {
+      font-size: 750%;
     }
     #stopwatch {
       /* long term this should be handled with a container div but for now it's just fine */
       overflow-y: auto;
     }
+
+    #main_display {
+      display: fixed;
+      margin-left: 460px;
+      top:0px;
+    }
   </style>
 </head>
 <body bgcolor='#200'>
   <div id='sidebar_display'>
+    <div>
+    <fieldset>
+      <legend>EXPECTED DISTANCE @ CAST</legend>
+      <span id='expected_distance' class='big'></span>
+      <br>
+      <span class='dim'>@</span>
+      <span id='current_cast' class='big'></span>
+    </fieldset>
+    </div>
+
     <div>
     <fieldset>
       <legend>TOD</legend>
@@ -65,31 +89,18 @@
 
     <div>
     <fieldset>
-      <legend>CAST</legend>
-      <span id='current_cast'></span>
+      <legend>FACTORS</legend>
+      <ul>
+      <li>ODO:&nbsp;<span id='odo' class='small'></span></li>
+      <li>TIME:&nbsp;<span id='time' class='small'></span></li>
+      </ul>
     </fieldset>
     </div>
 
     <div>
     <fieldset>
-      <legend>EXPECTED DISTANCE</legend>
-      <span id='expected_distance'></span>
-    </fieldset>
-    </div>
-
-    <div class='small'>
-    <fieldset>
-      <legend>FACTORS</legend>
-      <ul>
-      <li>ODO:&nbsp;<span id='odo'></span></li>
-      <li>TIME:&nbsp;<span id='time'></span></li>
-      </ul>
-    </fieldset>
-    </div>
-
-    <div class='small'>
-    <fieldset>
       <legend>DOCS</legend>
+      <span class='small'>
       <ul>
         <li>XtimeDD:DD.dd</li>
         <li>XodoDD.D</li>
@@ -100,6 +111,7 @@
         <li>update</li>
         <li>reset (!!! DELETES EVERYTHING !!!)</li>
       </dl>
+      </span>
     </fieldset>
     </div>
 
