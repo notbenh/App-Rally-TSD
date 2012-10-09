@@ -23,6 +23,8 @@ TIME = (time) ->
     [junk,H,M,C] = time.toString().match(/(\d*):(\d*)[.](\d*)/)
   else if time.match(/:/)
     [junk,H,M,S] = time.toString().match(/(\d*):(\d*):?(\d*)/)
+  else if time.match(/[.]{2}/)
+    [junk,Ms] = time.toString().match(/(\d*)[.]{2}(\d*)/)
   else if time.match(/[.]/)
     [junk,M,C] = time.toString().match(/(\d*)[.](\d*)/)
   else
@@ -36,12 +38,13 @@ TIME = (time) ->
     now.setHours( now.getHours() + H) if H
     now.setMinutes( now.getMinutes() + M) if M
     now.setSeconds( now.getSeconds() + S) if S
+    now.setMilliseconds( now.getMilliseconds() + Ms ) if Ms
   else
     now.setHours(H) if H
     now.setMinutes(M) if M
     now.setSeconds(S) if S
+    now.setMilliseconds(Ms ? 0)
 
-  now.setMilliseconds(0)
   return now
 
 class EventLog
@@ -127,28 +130,33 @@ class TimeEvent
 
 class HeartBeat
   constructor: (@id,@interval,@action) ->
-    @setUpdateInterval()
+    @_ival = @setUpdateInterval()
     
-  update: ->
-    $(@id).html( @action() )
+  update: -> $(@id).html( @action() )
+  clear:  -> clearInterval(@_ival)
 
   setUpdateInterval: ->
-    setInterval( @update.bind(this), @interval)
+    return setInterval( @update.bind(this), @interval)
 
 class Timer
   constructor: (@for, @beep, @close) ->
-    @for = TIME(@for ? '0') unless typeof @for == 'Date'
-    # been not yet done
-    # close action not yet done
-    @setUpdateInterval()
+    @for   = TIME(@for ? '0') unless typeof @for == 'Date'
+    @beep  = @beep  ? 1
+    @close = @close ? 1
+    @_ival = @setUpdateInterval()
     
   update: ->
     #$(@id).html( @action() )
     now = new Date
-    console.info([@for,now, @for - now])
+    console.info(UTC_HMC(new Date(@for - now )))
+    if @for - now <= 0 and @close
+      console.info('DONE')
+      @clear()
+
+  clear:  -> clearInterval(@_ival)
 
   setUpdateInterval: ->
-    setInterval( @update.bind(this), 1000 )
+    return setInterval( @update.bind(this), 10 )
 
   
     
