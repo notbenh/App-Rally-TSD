@@ -17,7 +17,6 @@ UTC_HMC = (date) ->
 TIME = (time) ->
   # TODO this will crap out over midnight as date's change
   [junk,op,time] = time.toString().match(/^([+-])?(.*)/)
-  console.info([op,time])
 
   if time.match(/:/) and time.match(/[.]/)
     [junk,H,M,C] = time.toString().match(/(\d*):(\d*)[.](\d*)/)
@@ -139,6 +138,7 @@ class HeartBeat
     return setInterval( @update.bind(this), @interval)
 
 class Timer
+  # TODO this should be converted to be a HeartBeat
   constructor: (@for, @beep, @close) ->
     @for   = TIME(@for ? '0') unless typeof @for == 'Date'
     @beep  = @beep  ? 1
@@ -146,20 +146,19 @@ class Timer
     @_ival = @setUpdateInterval()
     
   update: ->
-    #$(@id).html( @action() )
-    now = new Date
-    console.info(UTC_HMC(new Date(@for - now )))
-    if @for - now <= 0 and @close
+    now  = @for - (new Date)
+    show = UTC_HMC(new Date(now))
+    $('#timer').html( show )
+    console.info( show )
+    if now <= 0 and @close
       console.info('DONE')
       @clear()
+      $('#timer').html('')
 
   clear:  -> clearInterval(@_ival)
 
   setUpdateInterval: ->
     return setInterval( @update.bind(this), 10 )
-
-  
-    
     
 
 class CLI
@@ -216,8 +215,7 @@ $ ->
                           when 'update' then e.display()
                           when 'odo'    then e.odo_factor = value / e.last().dist
                           when 'time'   then e.setTimeOffset(value)
-                          when 'cu'     then console.info('CountUp')
-                          when 'cd'     then console.info('CountDown')
+                          when 'p'      then new Timer('+' + value)
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value

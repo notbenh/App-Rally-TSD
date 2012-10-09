@@ -60,12 +60,16 @@
       /* long term this should be handled with a container div but for now it's just fine */
       overflow-y: auto;
     }
-
     #main_display {
       display: fixed;
       margin-left: 460px;
       top:0px;
     }
+
+    #terminal {
+      font-size: 20px;
+    }
+ 
   </style>
 </head>
 <body bgcolor='#200'>
@@ -117,9 +121,9 @@
 
   </div>
   <div id='main_display'>
-    <div id='timers'></div>
     <div id='terminal'>
       <input type='text' id='buffer'>
+      <span id='timer'></span>
     </div>
     <div id='stopwatch'>
       <div id='split'></div>
