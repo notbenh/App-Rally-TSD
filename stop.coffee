@@ -14,7 +14,35 @@ UTC_HMC = (date) ->
          , date.getUTCSeconds() * 100/60 + date.getUTCMilliseconds() / 1000 \
          )
 
+TIME = (time) ->
+  # TODO this will crap out over midnight as date's change
+  [junk,op,time] = time.toString().match(/^([+-])?(.*)/)
+  console.info([op,time])
 
+  if time.match(/:/) and time.match(/[.]/)
+    [junk,H,M,C] = time.toString().match(/(\d*):(\d*)[.](\d*)/)
+  else if time.match(/:/)
+    [junk,H,M,S] = time.toString().match(/(\d*):(\d*):?(\d*)/)
+  else if time.match(/[.]/)
+    [junk,M,C] = time.toString().match(/(\d*)[.](\d*)/)
+  else
+    C = time
+
+  S = parseInt((C ? 0) * 60/100) unless S
+  #console.info([time,H,M,C,S])
+  
+  now = new Date
+  if op == '+'
+    now.setHours( now.getHours() + H) if H
+    now.setMinutes( now.getMinutes() + M) if M
+    now.setSeconds( now.getSeconds() + S) if S
+  else
+    now.setHours(H) if H
+    now.setMinutes(M) if M
+    now.setSeconds(S) if S
+
+  now.setMilliseconds(0)
+  return now
 
 class EventLog
   constructor: (@id) ->
@@ -23,12 +51,7 @@ class EventLog
     @time_hack = 0
 
   setTimeOffset: (time) ->
-    now = new Date
-    [junk,H,M,C] = time.match(/^\s*(\d\d):(\d\d)([.].*)?/)
-    C = 0 unless C
-    S = parseInt(C * 60/100)
-    hack = new Date(now.getFullYear(), now.getMonth(), now.getDay(), H, M ,S, 0)
-    @time_hack = hack - now
+    @time_hack = TIME(time) - (new Date)
 
   add: (event) ->
     if typeof event == 'string'
@@ -112,6 +135,25 @@ class HeartBeat
   setUpdateInterval: ->
     setInterval( @update.bind(this), @interval)
 
+class Timer
+  constructor: (@for, @beep, @close) ->
+    @for = TIME(@for ? '0') unless typeof @for == 'Date'
+    # been not yet done
+    # close action not yet done
+    @setUpdateInterval()
+    
+  update: ->
+    #$(@id).html( @action() )
+    now = new Date
+    console.info([@for,now, @for - now])
+
+  setUpdateInterval: ->
+    setInterval( @update.bind(this), 1000 )
+
+  
+    
+    
+
 class CLI
   # TODO I would rather have this become a hash->switch thing
   constructor: (@selector, @events) ->
@@ -152,11 +194,11 @@ $ ->
   e = new EventLog('#log')
   buffer = new CLI( '#buffer' ,
                     keys  :
-                      32: -> 
+                      32: ->
                         e.add()
                         e.display()
                         buffer.clear()
-                      13: -> 
+                      13: ->
                         # TODO this should not directly access 
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
                         id = 0 unless id.length
@@ -166,6 +208,8 @@ $ ->
                           when 'update' then e.display()
                           when 'odo'    then e.odo_factor = value / e.last().dist
                           when 'time'   then e.setTimeOffset(value)
+                          when 'cu'     then console.info('CountUp')
+                          when 'cd'     then console.info('CountDown')
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value

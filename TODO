@@ -1,0 +1,10 @@
+- BIG CAST should be NAN after reset
+- Timers
+  - Count up
+  - Count down
+- direct edit of factors
+  - odo
+  - time
+- reset should move stack to some other storeage
+  - allow for a big export ('save')
+- use local store
