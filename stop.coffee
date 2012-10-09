@@ -207,7 +207,8 @@ $ ->
                         buffer.clear()
                       13: ->
                         # TODO this should not directly access 
-                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]+):?(.*)/)
+                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]*):?(.*)/)
+                        console.info([id,method,value])
                         id = 0 unless id.length
                         switch method
                           when 'rm'     then e.log.splice(id,1)
@@ -216,6 +217,14 @@ $ ->
                           when 'odo'    then e.odo_factor = value / e.last().dist
                           when 'time'   then e.setTimeOffset(value)
                           when 'p'      then new Timer('+' + value)
+                          when ''
+                            value = id + value
+                            [dist,cast] = value.toString().split('@')
+                            console.info(['DIST',dist,'CAST',cast])
+                            it = e.last()
+                            it.dist = dist if dist
+                            it.cast = cast if cast
+                            it.calculate(e.odo_factor)
                           else
                             it = e.getId(id)
                             if typeof it[method] is 'function' then it[method](value) else it[method] = value
