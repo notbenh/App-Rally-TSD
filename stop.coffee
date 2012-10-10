@@ -30,21 +30,26 @@ TIME = (time) ->
     C = time
 
   S = parseInt((C ? 0) * 60/100) unless S
-  #console.info([time,H,M,C,S])
+  console.info([time,H,M,C,S,Ms])
   
-  now = new Date
+  now = new Date()
+  console.info(['first',now]);
   if op == '+'
-    now.setHours( now.getHours() + H) if H
-    now.setMinutes( now.getMinutes() + M) if M
-    now.setSeconds( now.getSeconds() + S) if S
-    now.setMilliseconds( now.getMilliseconds() + Ms ) if Ms
-  else
-    now.setHours(H) if H
-    now.setMinutes(M) if M
-    now.setSeconds(S) if S
-    now.setMilliseconds(Ms ? 0)
+    H = now.getHours() + parseInt(H)
+    M = now.getMinutes() + parseInt(M)
+    S = now.getSeconds() + parseInt(S)
+    Ms= now.getMilliseconds() + parseInt(Ms)
 
-  return now
+  console.info([time,H,M,C,S,Ms])
+
+  now.setHours(H)   if typeof H == 'number' and H > 0
+  #now.setMinutes(M) if typeof M == 'number' and M > 0
+  #now.setSeconds(S) if typeof S == 'number' and S > 0
+  #now.setMilliseconds(Ms) if typeof Ms == 'number' and Ms > 0
+
+  future = new Date( now.getFullYear(), now.getMonth(), now.getDay(), H, M, S, Ms)
+  console.info(['second',future])
+  return future
 
 class EventLog
   constructor: (@id) ->
@@ -147,15 +152,13 @@ class Timer
     
   update: ->
     now  = @for - (new Date)
-    show = UTC_HMC(new Date(now))
+    show = UTC_HMC(new Date(Math.abs(now)))
     $('#timer').html( show )
-    console.info( show )
-    if now <= 0 and @close
-      console.info('DONE')
-      @clear()
-      $('#timer').html('')
+    if now <= 0 and @close then @clear()
 
-  clear:  -> clearInterval(@_ival)
+  clear:  -> 
+    clearInterval(@_ival)
+    $('#timer').html('')
 
   setUpdateInterval: ->
     return setInterval( @update.bind(this), 10 )
@@ -171,14 +174,14 @@ class CLI
         if typeof  @events.keys[event.which] == 'function'
           @events.keys[event.which]( event )
         else
-          console.info('THIS HAS NOT YET BEEN IMPLIMENTED')
-      else if @events.values[ current_value ]
+          console.info('THIS HAS NOT YET BEEN IMPLEMENTED')
+      else if current_value in @events.values?
         if typeof @events.values[ current_value ] == 'function'
           @events.values[ current_value ]( event )
           msg = "key match for #{current_value}"
           console.info(msg)
         else
-          console.info('THIS HAS NOT YET BEEN IMPLIMENTED')
+          console.info('THIS HAS NOT YET BEEN IMPLEMENTED')
       else if @events.default
         # @events.default( event )
       else
@@ -208,7 +211,7 @@ $ ->
                       13: ->
                         # TODO this should not directly access 
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]*):?(.*)/)
-                        console.info([id,method,value])
+                        #console.info([id,method,value])
                         id = 0 unless id.length
                         switch method
                           when 'rm'     then e.log.splice(id,1)
@@ -216,11 +219,17 @@ $ ->
                           when 'update' then e.display()
                           when 'odo'    then e.odo_factor = value / e.last().dist
                           when 'time'   then e.setTimeOffset(value)
-                          when 'p'      then new Timer('+' + value)
+                          when 'p'
+                            e.timer?.clear()
+                            e.timer = new Timer('+' + value,1,1)
+                          when 'cd'
+                            e.timer?.clear()
+                            e.timer = new Timer(('+' + value), 1, 0)
+                          when 'clear'
+                            e.timer?.clear()
                           when ''
                             value = id + value
                             [dist,cast] = value.toString().split('@')
-                            console.info(['DIST',dist,'CAST',cast])
                             it = e.last()
                             it.dist = dist if dist
                             it.cast = cast if cast
