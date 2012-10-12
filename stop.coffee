@@ -29,27 +29,28 @@ TIME = (time) ->
   else
     C = time
 
+  H = parseInt(H)
+  M = parseInt(M)
   S = parseInt((C ? 0) * 60/100) unless S
+  Ms= parseInt(Ms)
   console.info([time,H,M,C,S,Ms])
   
-  now = new Date()
-  console.info(['first',now]);
+  now = new Date
   if op == '+'
     H = now.getHours() + parseInt(H)
     M = now.getMinutes() + parseInt(M)
     S = now.getSeconds() + parseInt(S)
     Ms= now.getMilliseconds() + parseInt(Ms)
+    console.info(['alter time mode',time,H,M,C,S,Ms])
+  else
+    console.info('raw setting mode')
+    now.setHours(H)   if typeof H == 'number' and H > 0
+    now.setMinutes(M) if typeof M == 'number' and M > 0
+    now.setSeconds(S) if typeof S == 'number' and S > 0
+    now.setMilliseconds(Ms) if typeof Ms == 'number' and Ms > 0
 
-  console.info([time,H,M,C,S,Ms])
-
-  now.setHours(H)   if typeof H == 'number' and H > 0
-  #now.setMinutes(M) if typeof M == 'number' and M > 0
-  #now.setSeconds(S) if typeof S == 'number' and S > 0
-  #now.setMilliseconds(Ms) if typeof Ms == 'number' and Ms > 0
-
-  future = new Date( now.getFullYear(), now.getMonth(), now.getDay(), H, M, S, Ms)
-  console.info(['second',future])
-  return future
+  console.info(now)
+  return now
 
 class EventLog
   constructor: (@id) ->
