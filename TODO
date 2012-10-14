@@ -8,3 +8,5 @@
 - reset should move stack to some other storeage
   - allow for a big export ('save')
 - use local store
+- Add time dec's to the big chart by working out the 'ideal time' 
+- add ! as a way to mark a time entry as important. 
