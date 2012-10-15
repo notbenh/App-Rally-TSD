@@ -1,4 +1,3 @@
-- BIG CAST should be NAN after reset
 - Timers
   - Count up
   - Count down
@@ -9,5 +8,4 @@
   - allow for a big export ('save')
 - use local store
 - Add time dec's to the big chart by working out the 'ideal time' 
-- add ! as a way to mark a time entry as important. 
 - there should be some default that if CLI gets a bunch of text that does not match anything else then it's a note

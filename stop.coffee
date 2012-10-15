@@ -217,7 +217,9 @@ $ ->
                         id = 0 unless id.length
                         switch method
                           when 'rm'     then e.log.splice(id,1)
-                          when 'reset'  then e.log = []
+                          when 'reset'
+                            e.log = []
+                            $('#expected_distance').html('')
                           when 'update' then e.display()
                           when 'odo'    then e.odo_factor = value / e.last().dist
                           when 'time'   then e.setTimeOffset(value)
