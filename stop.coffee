@@ -68,10 +68,11 @@ class EventLog
       # do nothing as we have been passed a proper object
     else
       event = new TimeEvent('automated')
-
+   
     event.time = event.date - @first().date if @first()?
     event.diff = event.date - @last().date if @last()?
     event.cast = @last()?.cast
+    event.last_dist = @last()?.dist ? 0 # TODO this is horrable 
     event.calculate()
 
     #@log.push( event ) # I'm going to reverse the stack 
@@ -90,6 +91,7 @@ class EventLog
                 <th>tod</th>
                 <th>split</th>
                 <th>lap</th>
+                <th>&Delta;lap</th>
                 <th>CAST<sub>actual</sub></th>
                 <th>CAST<sub>calculated</sub></th>
                 <th>&Delta;CAST</th>
@@ -103,6 +105,7 @@ class EventLog
                  <td>#{HMC(event.date) }</td>
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
+                 <td>#{event.lap_diff()}</td>
                  <td>#{event.cast}</td>
                  <td>#{parseFloat(event._cast).toFixed(3)}</td>
                  <td>#{parseFloat(event._cast - event.cast).toFixed(3)}</td>
@@ -115,9 +118,12 @@ class EventLog
 class TimeEvent
   constructor: (@note) ->
     @date = new Date
-    @time = 0
-    @diff = 0
+    @time = 0 # this is set in add, it's the number of milliseconds covered since start (ie split time)
+    @diff = 0 # this is the milliseconds since the last instruction (ie lap time)
     @cast = 1 #TODO this should be some kinda default?
+    #@_cast= 1 # what rate should I have covered this dist/time?
+    #@dist = 0 # what's the odo reading at the time of this event?
+    #@_dist= 0 # what's the distance covered since the last instruction (TODO Better name? )
     @important = 0
   
   diff_in_min: ->
@@ -132,7 +138,21 @@ class TimeEvent
   # TODO SLOPPY passing the odo factor here
   calculate: (odo_factor) ->
     # CAST = dist / diff
-    @_cast = (@dist * odo_factor) / @diff_in_hr() if @dist? and @diff?
+    @_cast = (@dist * odo_factor) / @diff_in_hr() 
+    @_dist = (@dist * odo_factor) - @last_dist 
+    
+  lap_diff: ->
+    should_have = ((@_dist * 60) / @_cast) * (1000 * 60)  # milliseconds
+    return '' unless should_have
+    the_diff = @diff - should_have
+    the_time = UTC_HMC(new Date(Math.abs(the_diff)))
+    console.info(['DIFF',should_have,the_diff,@diff])
+    if the_diff > 0
+      return "FAST&nbsp;#{the_time}"
+    else if the_diff < 0
+      return "SLOW&nbsp;#{the_time}"
+    else ''
+    
 
 class HeartBeat
   constructor: (@id,@interval,@action) ->
@@ -236,8 +256,13 @@ $ ->
                             it.important = not it.important
                             console.info(it)
                           when '' # TODO this could be a bit dangrous
-                            value = id + value
-                            [dist,cast] = value.toString().split('@')
+                            string_value = (id + value).toString()
+                            if string_value.match /[@]/
+                              [dist,cast] = string_value.split('@') 
+                            else
+                              dist = parseInt(id) + parseFloat(value)
+                              cast = undefined
+                            console.info(" DIST #{dist} CAST #{cast} from '#{string_value}'")
                             it = e.last()
                             it.dist = dist if dist
                             it.cast = cast if cast
