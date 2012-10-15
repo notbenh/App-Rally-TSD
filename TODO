@@ -10,3 +10,4 @@
 - use local store
 - Add time dec's to the big chart by working out the 'ideal time' 
 - add ! as a way to mark a time entry as important. 
+- there should be some default that if CLI gets a bunch of text that does not match anything else then it's a note

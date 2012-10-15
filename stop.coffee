@@ -98,7 +98,7 @@ class EventLog
               </tr>
             """
     table += """
-               <tr>
+               <tr class='#{'important' if event.important}'>
                  <th>#{id}</th>
                  <td>#{HMC(event.date) }</td>
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
@@ -118,6 +118,7 @@ class TimeEvent
     @time = 0
     @diff = 0
     @cast = 1 #TODO this should be some kinda default?
+    @important = 0
   
   diff_in_min: ->
     @diff / (1000*60)
@@ -211,8 +212,8 @@ $ ->
                         buffer.clear()
                       13: ->
                         # TODO this should not directly access 
-                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z]*):?(.*)/)
-                        #console.info([id,method,value])
+                        [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z!]*):?(.*)/)
+                        console.info([id,method,value])
                         id = 0 unless id.length
                         switch method
                           when 'rm'     then e.log.splice(id,1)
@@ -228,7 +229,11 @@ $ ->
                             e.timer = new Timer(('+' + value), 1, 0)
                           when 'clear'
                             e.timer?.clear()
-                          when ''
+                          when '!' 
+                            it = e.getId(id)
+                            it.important = not it.important
+                            console.info(it)
+                          when '' # TODO this could be a bit dangrous
                             value = id + value
                             [dist,cast] = value.toString().split('@')
                             it = e.last()
