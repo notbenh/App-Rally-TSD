@@ -72,7 +72,6 @@ class EventLog
     event.time = event.date - @first().date if @first()?
     event.diff = event.date - @last().date if @last()?
     event.cast = @last()?.cast
-    event.last_dist = @last()?.dist ? 0 # TODO this is horrable 
     event.calculate()
 
     #@log.push( event ) # I'm going to reverse the stack 
@@ -81,6 +80,18 @@ class EventLog
   getId: (id) -> if id == -1 then return @first else @log[id]
   last: -> @log[0]
   first: -> @log[ @log.length - 1]
+  disp_lap_diff: (event,id) ->  # TODO THIS IS SUCH A HACK !!!
+    fact_dist   = event.dist * @odo_factor
+    prev        = @getId(id + 1) # !!! remember that this is a reversed stack
+    dist_diff   = (fact_dist - prev?.dist) ? 0
+    should_have = ((dist_diff * 60) / event.cast) * (1000 * 60) # miliseconds
+    the_diff = event.diff - should_have
+    the_time = UTC_HMC(new Date(Math.abs(the_diff)))
+    console.info(""" #{fact_dist} - #{prev?.dist} = #{dist_diff} => #{should_have} thus #{the_diff} => #{the_time}
+                 """)
+    if the_diff > 0      then return "SLOW&nbsp;#{the_time}"
+    else if the_diff < 0 then return "FAST&nbsp;#{the_time}"
+    else ''
 
   # TODO this is a mess, I should not really be building a table here (isn't there a template for this?)
   display: ->
@@ -105,7 +116,7 @@ class EventLog
                  <td>#{HMC(event.date) }</td>
                  <td>#{UTC_HMC( new Date(event.time)) }</td>
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
-                 <td>#{event.lap_diff()}</td>
+                 <td>#{@disp_lap_diff(event,id)}</td>
                  <td>#{event.cast}</td>
                  <td>#{parseFloat(event._cast).toFixed(3)}</td>
                  <td>#{parseFloat(event._cast - event.cast).toFixed(3)}</td>
@@ -114,6 +125,7 @@ class EventLog
                </tr>
              """ for event,id in @log
     $(@id).html(table + '</table>')
+
 
 class TimeEvent
   constructor: (@note) ->
@@ -139,21 +151,7 @@ class TimeEvent
   calculate: (odo_factor) ->
     # CAST = dist / diff
     @_cast = (@dist * odo_factor) / @diff_in_hr() 
-    @_dist = (@dist * odo_factor) - @last_dist 
     
-  lap_diff: ->
-    should_have = ((@_dist * 60) / @_cast) * (1000 * 60)  # milliseconds
-    return '' unless should_have
-    the_diff = @diff - should_have
-    the_time = UTC_HMC(new Date(Math.abs(the_diff)))
-    console.info(['DIFF',should_have,the_diff,@diff])
-    if the_diff > 0
-      return "FAST&nbsp;#{the_time}"
-    else if the_diff < 0
-      return "SLOW&nbsp;#{the_time}"
-    else ''
-    
-
 class HeartBeat
   constructor: (@id,@interval,@action) ->
     @_ival = @setUpdateInterval()
