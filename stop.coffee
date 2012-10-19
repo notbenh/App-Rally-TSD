@@ -29,28 +29,25 @@ TIME = (time) ->
   else
     C = time
 
-  H = parseInt(H)
-  M = parseInt(M)
+  H = parseInt(H ? 0)
+  M = parseInt(M ? 0)
   S = parseInt((C ? 0) * 60/100) unless S
-  Ms= parseInt(Ms)
-  console.info([time,H,M,C,S,Ms])
+  Ms= parseInt(Ms ? 0)
+  console.info("TIME INPUT: time #{H}:#{M}:#{S}.#{Ms}")
   
-  now = new Date
   if op == '+'
-    H = now.getHours() + parseInt(H)
-    M = now.getMinutes() + parseInt(M)
-    S = now.getSeconds() + parseInt(S)
-    Ms= now.getMilliseconds() + parseInt(Ms)
-    console.info(['alter time mode',time,H,M,C,S,Ms])
-  else
-    console.info('raw setting mode')
-    now.setHours(H)   if typeof H == 'number' and H > 0
-    now.setMinutes(M) if typeof M == 'number' and M > 0
-    now.setSeconds(S) if typeof S == 'number' and S > 0
-    now.setMilliseconds(Ms) if typeof Ms == 'number' and Ms > 0
+    now = new Date
+    H = parseInt(now.getHours())   + H
+    M = parseInt(now.getMinutes()) + M
+    S = parseInt(now.getSeconds()) + S
+    Ms= parseInt(now.getMilliseconds()) + Ms
 
-  console.info(now)
-  return now
+    console.info(['alter time mode',time,H,M,C,S,Ms])
+
+  out_date = new Date( 1970,1,1,H,M,S,Ms ) # TODO This does not factor in any offset 
+  out = out_date.valueOf() 
+  console.info("value of out: #{out}")
+  return out
 
 class EventLog
   constructor: (@id) ->
@@ -59,6 +56,7 @@ class EventLog
     @time_hack = 0
 
   setTimeOffset: (time) ->
+    console.error('THIS IS BROKEN')
     @time_hack = TIME(time) - (new Date)
 
   add: (event) ->
@@ -87,8 +85,7 @@ class EventLog
     should_have = ((dist_diff * 60) / event.cast) * (1000 * 60) # miliseconds
     the_diff = event.diff - should_have
     the_time = UTC_HMC(new Date(Math.abs(the_diff)))
-    console.info(""" #{fact_dist} - #{prev?.dist} = #{dist_diff} => #{should_have} thus #{the_diff} => #{the_time}
-                 """)
+    #console.info(""" #{fact_dist} - #{prev?.dist} = #{dist_diff} => #{should_have} thus #{the_diff} => #{the_time} """)
     if the_diff > 0      then return "SLOW&nbsp;#{the_time}"
     else if the_diff < 0 then return "FAST&nbsp;#{the_time}"
     else ''
@@ -103,9 +100,12 @@ class EventLog
                 <th>split</th>
                 <th>lap</th>
                 <th>&Delta;lap</th>
+                <th>CAST</th>
+                <!--
                 <th>CAST<sub>actual</sub></th>
                 <th>CAST<sub>calculated</sub></th>
                 <th>&Delta;CAST</th>
+                --!>
                 <th>dist<sub>miles</sub></th>
                 <th>note</th>
               </tr>
@@ -118,8 +118,10 @@ class EventLog
                  <td>#{UTC_HMC( new Date(event.diff)) }</td>
                  <td>#{@disp_lap_diff(event,id)}</td>
                  <td>#{event.cast}</td>
+                 <!--
                  <td>#{parseFloat(event._cast).toFixed(3)}</td>
                  <td>#{parseFloat(event._cast - event.cast).toFixed(3)}</td>
+                 --!>
                  <td>#{event.dist}</td>
                  <td>#{event.note}</td>
                </tr>
@@ -165,10 +167,15 @@ class HeartBeat
 class Timer
   # TODO this should be converted to be a HeartBeat
   constructor: (@for, @beep, @close) ->
-    @for   = TIME(@for ? '0') unless typeof @for == 'Date'
+    dnow = new Date
+    dfor = TIME(@for ? 0)
+    console.info(['moo', dnow.valueOf(), dfor.valueOf()])
+    
+    @for   = new Date( (new Date).valueOf() + TIME(@for ? '0').valueOf() ) unless typeof @for == 'Date'
     @beep  = @beep  ? 1
     @close = @close ? 1
     @_ival = @setUpdateInterval()
+    console.info(['NEW TIMER',@for])
     
   update: ->
     now  = @for - (new Date)
@@ -231,7 +238,7 @@ $ ->
                       13: ->
                         # TODO this should not directly access 
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z!]*):?(.*)/)
-                        console.info([id,method,value])
+                        console.info(['ENTER HIT',id,method,value])
                         id = 0 unless id.length
                         switch method
                           when 'rm'     then e.log.splice(id,1)
@@ -260,7 +267,7 @@ $ ->
                             else
                               dist = parseInt(id) + parseFloat(value)
                               cast = undefined
-                            console.info(" DIST #{dist} CAST #{cast} from '#{string_value}'")
+                            #console.info(" DIST #{dist} CAST #{cast} from '#{string_value}'")
                             it = e.last()
                             it.dist = dist if dist
                             it.cast = cast if cast
