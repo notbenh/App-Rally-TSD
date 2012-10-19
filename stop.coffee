@@ -1,10 +1,6 @@
-HMC = (date) -> moment(date).format('HH:mm.cc')
+HMC     = (date) -> moment(date).format('HH:mm.cc')
 UTC_HMC = (date) -> moment(date).utc().format('HH:mm.cc')
-
-TIME = (time) ->
-  # TODO this will crap out over midnight as date's change
-  [junk,op,time] = time.toString().match(/^([+-])?(.*)/)
-
+TIME    = (time) -> # get just the epoch seconds for a time, this is still here because moment can not yet construct with cents
   if time.match(/:/) and time.match(/[.]/)
     [junk,H,M,C] = time.toString().match(/(\d*):(\d*)[.](\d*)/)
   else if time.match(/:/)
@@ -15,7 +11,6 @@ TIME = (time) ->
     [junk,M,C] = time.toString().match(/(\d*)[.](\d*)/)
   else
     C = time
-
   M = moment.duration({ hours:        parseInt(H ? 0)
                       , minutes:      parseInt(M ? 0)
                       , seconds:      parseInt((C ? 0) * 60/100) ? S 
@@ -28,6 +23,7 @@ class EventLog
     @log = []
     @odo_factor = 1
     @time_hack = 0
+    @dec = 0 # where I am going to store the timedec for the stack
 
   setTimeOffset: (time) ->
     @time_hack = moment(time,'HH:mm') - (new Date)
@@ -57,6 +53,8 @@ class EventLog
     dist_diff   = (fact_dist - prev?.dist) ? 0
     should_have = ((dist_diff * 60) / event.cast) * (1000 * 60) # miliseconds
     the_diff = event.diff - should_have
+    console.info("DEC: #{@dec} diff #{the_diff}")
+    @dec = @dec + (the_diff ? 0) unless typeof the_diff is 'undefined' or isNaN(the_diff)
     the_time = UTC_HMC(new Date(Math.abs(the_diff)))
     #console.info(""" #{fact_dist} - #{prev?.dist} = #{dist_diff} => #{should_have} thus #{the_diff} => #{the_time} """)
     if the_diff > 0      then return "SLOW&nbsp;#{the_time}"
@@ -65,6 +63,7 @@ class EventLog
 
   # TODO this is a mess, I should not really be building a table here (isn't there a template for this?)
   display: ->
+    @dec  = 0
     table = """
             <table>
               <tr>
@@ -99,6 +98,11 @@ class EventLog
                  <td>#{event.note}</td>
                </tr>
              """ for event,id in @log
+    if @dec < 0
+      type = 'FAST'
+    else
+      type = 'SLOW'
+    $('#dec').html("<strong>#{type} #{moment(Math.abs(@dec)).format('mm.cc')}</strong>") # HACK
     $(@id).html(table + '</table>')
 
 
