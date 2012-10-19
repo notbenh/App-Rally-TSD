@@ -30,8 +30,7 @@ class EventLog
     @time_hack = 0
 
   setTimeOffset: (time) ->
-    console.error('THIS IS BROKEN')
-    @time_hack = TIME(time) - (new Date)
+    @time_hack = moment(time,'HH:mm') - (new Date)
 
   add: (event) ->
     if typeof event == 'string'
