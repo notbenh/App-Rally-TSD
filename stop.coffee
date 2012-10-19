@@ -1,18 +1,5 @@
-HMC = (date) ->
-  sec = sprintf( '0.3f', date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 )
-
-  sprintf('%02d:%02d.%02.0f' \
-         , date.getHours()    \
-         , date.getMinutes()  \
-         , date.getSeconds() * 100/60 + date.getMilliseconds() / 1000 \
-         )
-
-UTC_HMC = (date) ->
-  sprintf('%02d:%02d.%02.3f' \
-         , date.getUTCHours()    \
-         , date.getUTCMinutes()  \
-         , date.getUTCSeconds() * 100/60 + date.getUTCMilliseconds() / 1000 \
-         )
+HMC = (date) -> moment(date).format('HH:mm.cc')
+UTC_HMC = (date) -> moment(date).utc().format('HH:mm.cc')
 
 TIME = (time) ->
   # TODO this will crap out over midnight as date's change
