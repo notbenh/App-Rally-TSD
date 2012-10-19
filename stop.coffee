@@ -29,25 +29,12 @@ TIME = (time) ->
   else
     C = time
 
-  H = parseInt(H ? 0)
-  M = parseInt(M ? 0)
-  S = parseInt((C ? 0) * 60/100) unless S
-  Ms= parseInt(Ms ? 0)
-  console.info("TIME INPUT: time #{H}:#{M}:#{S}.#{Ms}")
-  
-  if op == '+'
-    now = new Date
-    H = parseInt(now.getHours())   + H
-    M = parseInt(now.getMinutes()) + M
-    S = parseInt(now.getSeconds()) + S
-    Ms= parseInt(now.getMilliseconds()) + Ms
-
-    console.info(['alter time mode',time,H,M,C,S,Ms])
-
-  out_date = new Date( 1970,1,1,H,M,S,Ms ) # TODO This does not factor in any offset 
-  out = out_date.valueOf() 
-  console.info("value of out: #{out}")
-  return out
+  M = moment.duration({ hours:        parseInt(H ? 0)
+                      , minutes:      parseInt(M ? 0)
+                      , seconds:      parseInt((C ? 0) * 60/100) ? S 
+                      , milliseconds: parseInt(Ms ? 0)
+                      })
+  return M.valueOf()
 
 class EventLog
   constructor: (@id) ->
@@ -167,15 +154,10 @@ class HeartBeat
 class Timer
   # TODO this should be converted to be a HeartBeat
   constructor: (@for, @beep, @close) ->
-    dnow = new Date
-    dfor = TIME(@for ? 0)
-    console.info(['moo', dnow.valueOf(), dfor.valueOf()])
-    
-    @for   = new Date( (new Date).valueOf() + TIME(@for ? '0').valueOf() ) unless typeof @for == 'Date'
+    @for   = moment().add( TIME( @for ? 0 ) ) unless typeof @for == 'Date'
     @beep  = @beep  ? 1
     @close = @close ? 1
     @_ival = @setUpdateInterval()
-    console.info(['NEW TIMER',@for])
     
   update: ->
     now  = @for - (new Date)
@@ -250,10 +232,10 @@ $ ->
                           when 'time'   then e.setTimeOffset(value)
                           when 'p'
                             e.timer?.clear()
-                            e.timer = new Timer('+' + value,1,1)
+                            e.timer = new Timer(value,1,1)
                           when 'cd'
                             e.timer?.clear()
-                            e.timer = new Timer(('+' + value), 1, 0)
+                            e.timer = new Timer(value,1,0)
                           when 'clear'
                             e.timer?.clear()
                           when '!' 
