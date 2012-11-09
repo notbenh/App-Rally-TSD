@@ -233,7 +233,11 @@ $ ->
                             it.important = not it.important
                             console.info(it)
                           when '' # TODO this could be a bit dangrous
-                            string_value = (id + value).toString()
+                            if value.length > 0
+                              string_value = (id + value).toString()
+                            else 
+                              value = 0
+
                             if string_value.match /[@]/
                               [dist,cast] = string_value.split('@') 
                             else
