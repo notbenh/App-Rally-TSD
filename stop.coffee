@@ -13,7 +13,7 @@ TIME    = (time) -> # get just the epoch seconds for a time, this is still here 
     C = time
   M = moment.duration({ hours:        parseInt(H ? 0)
                       , minutes:      parseInt(M ? 0)
-                      , seconds:      parseInt((C ? 0) * 60/100) ? S 
+                      , seconds:      parseInt((C ? 0) * 60/100) ? S
                       , milliseconds: parseInt(Ms ? 0)
                       })
   return M.valueOf()
@@ -35,13 +35,13 @@ class EventLog
       # do nothing as we have been passed a proper object
     else
       event = new TimeEvent('automated')
-   
+
     event.time = event.date - @first().date if @first()?
     event.diff = event.date - @last().date if @last()?
     event.cast = @last()?.cast
     event.calculate()
 
-    #@log.push( event ) # I'm going to reverse the stack 
+    #@log.push( event ) # I'm going to reverse the stack
     @log.unshift( event )
 
   getId: (id) -> if id == -1 then return @first else @log[id]
@@ -116,7 +116,7 @@ class TimeEvent
     #@dist = 0 # what's the odo reading at the time of this event?
     #@_dist= 0 # what's the distance covered since the last instruction (TODO Better name? )
     @important = 0
-  
+
   diff_in_min: ->
     @diff / (1000*60)
 
@@ -129,12 +129,12 @@ class TimeEvent
   # TODO SLOPPY passing the odo factor here
   calculate: (odo_factor) ->
     # CAST = dist / diff
-    @_cast = (@dist * odo_factor) / @diff_in_hr() 
-    
+    @_cast = (@dist * odo_factor) / @diff_in_hr()
+
 class HeartBeat
   constructor: (@id,@interval,@action) ->
     @_ival = @setUpdateInterval()
-    
+
   update: -> $(@id).html( @action() )
   clear:  -> clearInterval(@_ival)
 
@@ -148,20 +148,20 @@ class Timer
     @beep  = @beep  ? 1
     @close = @close ? 1
     @_ival = @setUpdateInterval()
-    
+
   update: ->
     now  = @for - (new Date)
     show = UTC_HMC(new Date(Math.abs(now)))
     $('#timer').html( show )
     if now <= 0 and @close then @clear()
 
-  clear:  -> 
+  clear:  ->
     clearInterval(@_ival)
     $('#timer').html('')
 
   setUpdateInterval: ->
     return setInterval( @update.bind(this), 10 )
-    
+
 
 class CLI
   # TODO I would rather have this become a hash->switch thing
@@ -208,7 +208,7 @@ $ ->
                         e.display()
                         buffer.clear()
                       13: ->
-                        # TODO this should not directly access 
+                        # TODO this should not directly access
                         [junk,id,method,value] = $('#buffer').val().match(/^\s*(\d*)([a-z!]*):?(.*)/)
                         console.info(['ENTER HIT',id,method,value])
                         id = 0 unless id.length
@@ -228,25 +228,26 @@ $ ->
                             e.timer = new Timer(value,1,0)
                           when 'clear'
                             e.timer?.clear()
-                          when '!' 
+                          when '!'
                             it = e.getId(id)
                             it.important = not it.important
                             console.info(it)
                           when '' # TODO this could be a bit dangrous
+                            console.info('HERE!!!!')
                             if value.length > 0
                               string_value = (id + value).toString()
-                            else 
+                            else
                               value = 0
 
                             if string_value.match /[@]/
-                              [dist,cast] = string_value.split('@') 
+                              [dist,cast] = string_value.split('@')
                             else
                               dist = parseInt(id) + parseFloat(value)
                               cast = undefined
                             #console.info(" DIST #{dist} CAST #{cast} from '#{string_value}'")
                             it = e.last()
-                            it.dist = dist if dist
-                            it.cast = cast if cast
+                            it.dist = dist if dist?
+                            it.cast = cast if cast?
                             it.calculate(e.odo_factor)
                           else
                             it = e.getId(id)
